@@ -58,8 +58,15 @@ object IrPatternFactory {
     /** Sony SIRC 12-bit: 7 command bits followed by 5 address bits, LSB first. */
     fun sirc12(address: Int, command: Int): Pattern {
         val out = arrayListOf(2400, 600)
-        appendBits(out, command.toLong(), 7, 600, 600, 1200, 600)
-        appendBits(out, address.toLong(), 5, 600, 600, 1200, 600)
+        // SIRC uses pulse-width coding: a 1 is a 1200 us mark, a 0 is 600 us.
+        for (bit in 0 until 7) {
+            out.add(if (((command shr bit) and 1) != 0) 1200 else 600)
+            out.add(600)
+        }
+        for (bit in 0 until 5) {
+            out.add(if (((address shr bit) and 1) != 0) 1200 else 600)
+            out.add(600)
+        }
         out.add(45000)
         return pattern(40000, out)
     }
